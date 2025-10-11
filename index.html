@@ -1,0 +1,506 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>PREVENTIVO</title>
+<style>
+  :root{
+    --accent:#2b6cb0;
+    --muted:#666;
+    --bg:#f6f8fb;
+    --card:#fff;
+    --danger:#d9534f;
+    --burgundy:#800020;
+  }
+  html,body{height:100%;margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;}
+  body{background:var(--bg);padding:14px;color:#111}
+  .card{background:var(--card);border-radius:12px;padding:12px;margin-bottom:12px;box-shadow:0 6px 18px rgba(20,30,50,0.06)}
+  label{display:block;font-size:13px;color:var(--muted);margin-bottom:6px}
+  input[type="text"], input[type="number"], select, textarea, input[type="date"]{
+    width:100%;padding:9px;border-radius:8px;border:1px solid #e3e6ee;background:#fff;font-size:15px;box-sizing:border-box
+  }
+  .row{display:flex;gap:8px;align-items:center}
+  .row .col{flex:1}
+  button{background:var(--accent);color:#fff;padding:9px 12px;border-radius:10px;border:0;font-weight:600;cursor:pointer}
+  button.alt{background:#fff;color:var(--accent);border:1px solid var(--accent)}
+  .small{font-size:13px;color:var(--muted)}
+  .rooms-list,.extras-list{display:flex;flex-direction:column;gap:10px}
+  .room,.extra{border:1px dashed #e6e9f0;border-radius:8px;padding:10px;background:#fbfcff}
+  .room .title,.extra .title{display:flex;justify-content:space-between;align-items:center;font-weight:700}
+  .remove,.work-remove,.ex-remove{background:transparent;border:0;color:var(--danger);font-weight:700;cursor:pointer}
+  .muted-note{font-size:12px;color:var(--muted);margin-top:8px}
+  .actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+  .btn-danger{background:var(--danger)}
+  .work-line,.extra-row{display:flex;gap:8px;margin-top:8px;align-items:center}
+  .work-line select, .work-line input,.extra-row select,.extra-row input{flex:1}
+  .section-title{font-weight:800;margin:12px 0 6px}
+  .strike{text-decoration:line-through;color:#999}
+  .big{font-size:22px;font-weight:800}
+  .room-title-ui{color:var(--burgundy);font-weight:800;font-size:16px}
+  .fixed-note{font-size:12px;color:#333;margin-top:6px;font-style:italic}
+  .muted-italic{font-size:12px;color:#666;font-style:italic}
+  @media(min-width:900px){body{max-width:1000px;margin:14px auto}}
+  /* small helpers */
+  .w-60{width:60px}
+  .w-80{width:80px}
+  .w-110{width:110px}
+</style>
+</head>
+<body>
+<main>
+  <div class="card" style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px">
+    <div>
+      <div style="font-size:20px;font-weight:800">PREVENTIVO</div>
+      <div style="margin-top:8px">
+        <div><label style="margin-bottom:4px">Nome e cognome cliente</label><input id="cliente" type="text" placeholder="Es. Mario Rossi"></div>
+        <div style="margin-top:8px"><label style="margin-bottom:4px">Indirizzo</label><input id="indirizzo" type="text" placeholder="Es. Via Roma 1, Milano"></div>
+      </div>
+    </div>
+    <div style="text-align:right">
+      <div style="font-size:13px;color:var(--muted)">data preventivo :</div>
+      <input id="dataPreventivo" type="date" style="margin-top:6px"/>
+    </div>
+  </div>
+
+  <!-- Body sections -->
+  <div class="card">
+    <div class="section-title">IMBIANCATURA</div>
+    <div style="margin-bottom:8px">
+      <div style="display:flex;justify-content:flex-end">
+        <button id="addRoomBtn" type="button" class="alt">+ Aggiungi locale</button>
+      </div>
+    </div>
+    <div class="rooms-list" id="roomsContainer"></div>
+    <div class="muted-note">Per ciascun locale: puoi aggiungere più lavorazioni, scegliendo tipo lavorazione, pareti/soffitto, colore.</div>
+  </div>
+
+  <div class="card">
+    <div class="section-title">LAVORI EXTRA</div>
+    <div style="display:flex;justify-content:flex-end;margin-bottom:8px">
+      <button id="addExtraBtn" type="button" class="alt">+ Aggiungi lavoro extra</button>
+    </div>
+    <div class="extras-list" id="extrasContainer"></div>
+    <div style="display:flex;justify-content:space-between;margin-top:8px;font-weight:700">
+      <div>Totale Extra</div><div id="totaleExtraDisplay" class="big">€0,00</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="section-title">TEMPISTICHE</div>
+    <div class="row">
+      <div class="col">
+        <label>Giorni di lavoro</label>
+        <select id="giorniLavoro">
+          <option>0</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option><option>7</option><option>8</option><option>9</option><option>10</option>
+        </select>
+      </div>
+      <div style="width:110px">
+        <label>Persone</label>
+        <select id="personeLavoro"><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option></select>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="section-title">TOTALE</div>
+
+    <div style="margin-top:6px">
+      <label>Imbiancatura (€)</label>
+      <input id="imbiancaturaPrezzo" type="text" inputmode="decimal" placeholder="Es. 1200"/>
+    </div>
+
+    <div style="height:8px"></div>
+    <div class="row">
+      <div class="col">
+        <label>Tipo sconto</label>
+        <select id="scontoTipo"><option value="percent">Percentuale (%)</option><option value="euro">Valore (€)</option></select>
+      </div>
+      <div class="col">
+        <label>Valore sconto</label>
+        <input id="scontoValore" type="text" inputmode="decimal" placeholder="Es. 10 o 200"/>
+      </div>
+    </div>
+
+    <div style="margin-top:12px">
+      <div style="display:flex;justify-content:space-between"><div class="small">Totale imbiancatura (iniziale)</div><div id="displayImbiancatura" class="small">€0,00</div></div>
+      <div style="display:none;justify-content:space-between;margin-top:6px" id="scontoLine"><div class="small">Sconto applicato</div><div id="displaySconto" class="small">-€0,00</div></div>
+      <div style="display:flex;justify-content:space-between;margin-top:10px;padding-top:8px;border-top:1px solid #eee;font-size:18px;font-weight:800">
+        <div>Totale (dopo sconto)</div><div id="displayDopoSconto" class="big">€0,00</div>
+      </div>
+
+      <div style="display:flex;justify-content:space-between;margin-top:10px;font-size:18px;font-weight:800">
+        <div>Totale + Lavorazioni Extra</div><div id="displaySommaConExtra" class="big">€0,00</div>
+      </div>
+    </div>
+
+    <div style="margin-top:10px" class="muted-italic">
+      *Nel prezzo è compreso il costo del materiale e della manodopera
+    </div>
+  </div>
+
+  <div class="card actions" style="display:flex;justify-content:flex-end;gap:8px">
+    <button id="generateBtn" type="button">📄 Genera preventivo (PDF)</button>
+    <button id="clearBtn" type="button" class="btn-danger">🗑️ Cancella tutto</button>
+  </div>
+</main>
+
+<script>
+/* ---------- CONFIG ---------- */
+const defaultLocales = ["Soggiorno","Cucina","Camera da letto","Bagno","Corridoio","Ingresso","Balcone","Ripostiglio"];
+const defaultWorks = [
+  "Tinteggiatura: 2 mani idropittura lavabile e traspirante",
+  "Vento di sabbia",
+  "Fissativo (Primer)",
+  "Stuccatura dove necessario",
+  "Trattamento antimuffa",
+  "Applicazione di cementite"
+];
+const defaultExtras = [
+  "Installazione Lampadari",
+  "Montaggio mensole",
+  "Installazione tapparelle elettriche",
+  "Rinfrescata con smalto caloriferi",
+  "Rasatura parete",
+  "Pittura porte"
+];
+
+/* ---------- HELPERS ---------- */
+function escapeHtml(text){ return (text||'').toString().replace(/[&<>"']/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
+function uid(){ return Math.random().toString(36).slice(2,11); }
+function parseNumber(s){
+  if(s===undefined || s===null) return 0;
+  let t = String(s).trim();
+  if(t==='') return 0;
+  if(t.indexOf(',')>-1 && t.indexOf('.')>-1) t = t.replace(/\./g,'').replace(',', '.');
+  else t = t.replace(',', '.');
+  t = t.replace(/[^0-9\.\-]/g,'');
+  const v = parseFloat(t);
+  return isNaN(v) ? 0 : v;
+}
+function formatCurrency(n){ try{ return new Intl.NumberFormat('it-IT',{style:'currency',currency:'EUR'}).format(Number(n)||0); }catch(e){ return '€'+(Number(n)||0).toFixed(2); } }
+
+/* ---------- DOM REFS ---------- */
+let roomsContainer = document.getElementById('roomsContainer');
+let extrasContainer = document.getElementById('extrasContainer');
+
+/* ---------- ROOMS (unchanged behaviour) ---------- */
+function addRoomBlock(pref={}){
+  const id = uid();
+  const wrapper = document.createElement('div');
+  wrapper.className = 'room';
+  wrapper.dataset.id = id;
+
+  const localeOptions = defaultLocales.map(l=>`<option value="${escapeHtml(l)}">${escapeHtml(l)}</option>`).join('');
+  const workOptions = defaultWorks.map(w=>`<option value="${escapeHtml(w)}">${escapeHtml(w)}</option>`).join('');
+
+  wrapper.innerHTML = `
+    <div class="title"><div class="room-title-ui">Locale</div><button class="remove" type="button">✖</button></div>
+    <div style="margin-top:8px"><label>Locale</label><select class="room-locale">${localeOptions}</select></div>
+    <div class="works-list" style="margin-top:8px"></div>
+    <button type="button" class="alt add-work-btn" style="margin-top:6px">+ Aggiungi lavorazione</button>
+  `;
+
+  wrapper.querySelector('.remove').onclick = () => { wrapper.remove(); updateTotals(); };
+
+  const worksList = wrapper.querySelector('.works-list');
+  function addWorkLine(prefWork={}){
+    const workLine = document.createElement('div');
+    workLine.className = 'work-line';
+    workLine.style.marginTop = '6px';
+    workLine.innerHTML = `
+      <div style="flex:1">
+        <label>Tipo di lavorazione</label>
+        <select class="room-work">${workOptions}</select>
+      </div>
+      <div style="flex:1">
+        <label>Pareti / Soffitto</label>
+        <select class="room-parts">
+          <option value="">— Nessuno —</option>
+          <option value="pareti e soffitto">Pareti e soffitto</option>
+          <option value="pareti">Pareti</option>
+          <option value="soffitto">Soffitto</option>
+        </select>
+      </div>
+      <div class="w-60">
+        <label>N°</label>
+        <input type="number" class="room-parts-n" min="0" placeholder="Es. 2"/>
+      </div>
+      <div style="flex:1">
+        <label>Colore</label>
+        <select class="room-color">
+          <option value="">— Nessuno —</option>
+          <option value="Bianco">Bianco</option>
+          <option value="Altro">Altro</option>
+        </select>
+        <input class="room-color-alt" type="text" placeholder="Se Altro, scrivi il colore" style="display:none;margin-top:6px"/>
+      </div>
+      <div style="min-width:140px">
+        <label>&nbsp;</label>
+        <button class="remove-work alt" type="button" style="width:100%">Rimuovi</button>
+      </div>
+    `;
+
+    workLine.querySelector('.remove-work').onclick = () => { workLine.remove(); updateTotals(); };
+    const colorSelect = workLine.querySelector('.room-color');
+    const colorAlt = workLine.querySelector('.room-color-alt');
+    colorSelect.addEventListener('change', ()=> { colorAlt.style.display = (colorSelect.value === 'Altro') ? 'block' : 'none'; });
+
+    const partsSelect = workLine.querySelector('.room-parts');
+    const partsN = workLine.querySelector('.room-parts-n');
+    partsSelect.addEventListener('change', ()=> { partsN.style.display = (partsSelect.value === '') ? 'none' : 'block'; });
+    partsN.style.display = (partsSelect.value === '') ? 'none' : 'block';
+
+    // prefill if provided
+    if(prefWork.work) workLine.querySelector('.room-work').value = prefWork.work;
+    if(prefWork.parts) workLine.querySelector('.room-parts').value = prefWork.parts;
+    if(prefWork.partsN) workLine.querySelector('.room-parts-n').value = prefWork.partsN;
+    if(prefWork.color){
+      workLine.querySelector('.room-color').value = prefWork.color;
+      if(prefWork.color === 'Altro'){ workLine.querySelector('.room-color-alt').style.display='block'; workLine.querySelector('.room-color-alt').value = prefWork.customColor || ''; }
+    }
+
+    ['input','change'].forEach(ev => workLine.querySelectorAll('input,select').forEach(el => el.addEventListener(ev, updateTotals)));
+    worksList.appendChild(workLine);
+  }
+
+  wrapper.querySelector('.add-work-btn').onclick = () => addWorkLine();
+  addWorkLine(pref.workPref || {});
+  roomsContainer.appendChild(wrapper);
+  if(pref.locale) wrapper.querySelector('.room-locale').value = pref.locale;
+
+  updateTotals();
+  return wrapper;
+}
+
+/* ---------- EXTRAS: dropdown + prezzo/unità + quantità + totale riga ---------- */
+function addExtra(pref={}){
+  const wrapper = document.createElement('div');
+  wrapper.className = 'extra extra-row';
+  // build select options
+  const options = defaultExtras.map(e=>`<option value="${escapeHtml(e)}">${escapeHtml(e)}</option>`).join('');
+  wrapper.innerHTML = `
+    <div style="display:flex;gap:8px;align-items:center">
+      <select class="extra-name" style="flex:2">
+        <option value="">— Seleziona lavoro —</option>
+        ${options}
+      </select>
+      <input class="extra-price" type="text" inputmode="decimal" placeholder="Prezzo/unità (€)" style="flex:1"/>
+      <input class="extra-qty" type="number" min="1" value="1" style="width:80px"/>
+      <input class="extra-row-total" type="text" readonly value="€0,00" style="width:110px"/>
+      <button class="ex-remove" type="button">✖</button>
+    </div>
+  `;
+
+  const removeBtn = wrapper.querySelector('.ex-remove');
+  const selectName = wrapper.querySelector('.extra-name');
+  const priceInput = wrapper.querySelector('.extra-price');
+  const qtyInput = wrapper.querySelector('.extra-qty');
+  const totalInput = wrapper.querySelector('.extra-row-total');
+
+  removeBtn.onclick = () => { wrapper.remove(); updateTotals(); };
+
+  // prefill
+  if(pref.name) selectName.value = pref.name;
+  if(pref.price) priceInput.value = String(pref.price);
+  if(pref.qty) qtyInput.value = String(pref.qty);
+
+  function updateRow(){
+    const price = parseNumber(priceInput.value);
+    const qty = Math.max(0, parseNumber(qtyInput.value));
+    const rowTotal = price * qty;
+    totalInput.value = formatCurrency(rowTotal);
+    updateTotals(); // update overall totals
+  }
+
+  // events
+  selectName.addEventListener('change', ()=> {
+    // do not overwrite user's price; leave price empty so user can type it
+    updateRow();
+  });
+  priceInput.addEventListener('input', updateRow);
+  qtyInput.addEventListener('input', updateRow);
+
+  ['input','change'].forEach(ev => wrapper.querySelectorAll('input,select').forEach(el => el.addEventListener(ev, updateTotals)));
+
+  extrasContainer.appendChild(wrapper);
+  updateRow();
+  return wrapper;
+}
+
+/* ---------- TOTALS ---------- */
+function updateTotals(){
+  // extras: sum price * qty per row
+  let totaleExtra = 0;
+  extrasContainer.querySelectorAll('.extra-row').forEach(r => {
+    const price = parseNumber(r.querySelector('.extra-price').value || '0');
+    const qty = Math.max(0, parseNumber(r.querySelector('.extra-qty').value || '0'));
+    const rowTotal = price * qty;
+    const rowTotalEl = r.querySelector('.extra-row-total');
+    if(rowTotalEl) rowTotalEl.value = formatCurrency(rowTotal);
+    totaleExtra += rowTotal;
+  });
+  document.getElementById('totaleExtraDisplay').textContent = formatCurrency(totaleExtra);
+
+  // imbiancatura base, sconto e totali
+  const base = parseNumber(document.getElementById('imbiancaturaPrezzo').value || '0');
+  document.getElementById('displayImbiancatura').textContent = formatCurrency(base);
+
+  const scontoTipo = document.getElementById('scontoTipo').value;
+  const scontoVal = parseNumber(document.getElementById('scontoValore').value || '0');
+  let scontoApplied = (scontoTipo === 'percent') ? (base * scontoVal / 100) : scontoVal;
+  if(scontoApplied < 0) scontoApplied = 0;
+  document.getElementById('displaySconto').textContent = '-' + formatCurrency(scontoApplied);
+  document.getElementById('scontoLine').style.display = (scontoApplied > 0) ? 'flex' : 'none';
+
+  const dopoSconto = Math.max(0, base - scontoApplied);
+  document.getElementById('displayDopoSconto').textContent = formatCurrency(dopoSconto);
+
+  const totaleConExtra = dopoSconto + totaleExtra;
+  document.getElementById('displaySommaConExtra').textContent = formatCurrency(totaleConExtra);
+}
+
+/* ---------- EVENTS ---------- */
+document.getElementById('addRoomBtn').onclick = () => addRoomBlock();
+document.getElementById('addExtraBtn').onclick = () => addExtra();
+document.getElementById('imbiancaturaPrezzo').addEventListener('input', updateTotals);
+document.getElementById('scontoValore').addEventListener('input', updateTotals);
+document.getElementById('scontoTipo').addEventListener('change', updateTotals);
+
+document.getElementById('clearBtn').onclick = () => {
+  if(!confirm('Vuoi davvero cancellare tutto?')) return;
+  roomsContainer.innerHTML = '';
+  extrasContainer.innerHTML = '';
+  document.getElementById('imbiancaturaPrezzo').value = '';
+  document.getElementById('scontoValore').value = '';
+  document.getElementById('giorniLavoro').value = '0';
+  document.getElementById('personeLavoro').value = '1';
+  updateTotals();
+  addRoomBlock(); // convenience: start with one room
+};
+
+/* ---------- GENERA PDF / PRINT ---------- */
+document.getElementById('generateBtn').onclick = () => {
+  updateTotals();
+
+  const cliente = document.getElementById('cliente').value.trim();
+  const indirizzo = document.getElementById('indirizzo').value.trim();
+  const rawDate = document.getElementById('dataPreventivo').value;
+  let dataFormattata = rawDate;
+  if(rawDate){
+    const p = rawDate.split('-'); // yyyy-mm-dd
+    if(p.length===3) dataFormattata = `${p[2]}/${p[1]}/${p[0]}`;
+  }
+
+  // rooms + works
+  const rooms = [];
+  roomsContainer.querySelectorAll('.room').forEach(rEl => {
+    const locale = rEl.querySelector('.room-locale').value || '';
+    const works = [];
+    rEl.querySelectorAll('.work-line').forEach(wEl => {
+      const tipo = wEl.querySelector('.room-work').value || '';
+      const parts = wEl.querySelector('.room-parts').value || '';
+      const n = wEl.querySelector('.room-parts-n').value || '';
+      const color = wEl.querySelector('.room-color').value || '';
+      const custom = wEl.querySelector('.room-color-alt').value || '';
+      works.push({ tipo, parts, n, color, custom });
+    });
+    if(locale || works.length) rooms.push({ locale, works });
+  });
+
+  // extras
+  const extras = [];
+  let totaleExtra = 0;
+  extrasContainer.querySelectorAll('.extra-row').forEach(eEl => {
+    const name = eEl.querySelector('.extra-name').value || '';
+    const price = parseNumber(eEl.querySelector('.extra-price').value || '0');
+    const qty = Math.max(0, parseNumber(eEl.querySelector('.extra-qty').value || '0'));
+    const rowTotal = price * qty;
+    if(name || price || qty) {
+      extras.push({ name, price, qty, rowTotal });
+      totaleExtra += rowTotal;
+    }
+  });
+
+  // totals
+  const base = parseNumber(document.getElementById('imbiancaturaPrezzo').value || '0');
+  const scontoTipo = document.getElementById('scontoTipo').value;
+  const scontoVal = parseNumber(document.getElementById('scontoValore').value || '0');
+  let scontoApplied = (scontoTipo === 'percent') ? base * scontoVal / 100 : scontoVal;
+  if(scontoApplied < 0) scontoApplied = 0;
+  const dopoSconto = Math.max(0, base - scontoApplied);
+  const totaleFinale = dopoSconto + totaleExtra;
+
+  // build printable HTML (section titles in burgundy)
+  const styles = `<style>
+    body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;color:#111;margin:18px}
+    h1{font-size:20px;margin:0 0 8px}
+    h2{font-size:16px;margin:12px 0 6px;color:#800020}
+    .muted{color:#666;font-size:13px}
+    .small{font-size:13px}
+    .bold{font-weight:700}
+    .right{text-align:right}
+    .section{margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid #eee}
+    em.note{font-size:12px;color:#666;display:block;margin-top:12px;font-style:italic}
+  </style>`;
+
+  let html = `<!doctype html><html><head><meta charset="utf-8">${styles}<title>Preventivo</title></head><body>`;
+  html += `<div style="display:flex;justify-content:space-between;align-items:flex-start"><div><h1>PREVENTIVO</h1><div style="margin-top:6px"><div class="bold">${escapeHtml(cliente)}</div><div class="muted">${escapeHtml(indirizzo)}</div></div></div><div style="text-align:right"><div class="muted">data preventivo :</div><div class="bold">${escapeHtml(dataFormattata)}</div></div></div>`;
+
+  // IMBIANCATURA
+  html += `<div class="section"><h2>IMBIANCATURA</h2>`;
+  if(rooms.length===0) html += `<div class="muted">Nessuna lavorazione inserita.</div>`;
+  rooms.forEach(r => {
+    html += `<div style="margin-bottom:8px"><div class="bold">${escapeHtml(r.locale)}</div>`;
+    r.works.forEach(w => {
+      let line = `<div>${escapeHtml(w.tipo)}`;
+      if(w.parts) line += ` — ${escapeHtml(w.parts)}` + (w.n ? `: ${escapeHtml(w.n)}` : '');
+      if(w.color) line += ` — ${w.color==='Altro' ? 'Colore: ' + escapeHtml(w.custom) : 'Colore: ' + escapeHtml(w.color)}`;
+      line += `</div>`;
+      html += line;
+    });
+    html += `</div>`;
+  });
+  html += `</div>`;
+
+  // EXTRA
+  html += `<div class="section"><h2>LAVORAZIONI EXTRA</h2>`;
+  if(extras.length===0) html += `<div class="muted">Nessuna lavorazione extra inserita.</div>`;
+  extras.forEach(e => {
+    html += `<div style="margin-bottom:6px">${escapeHtml(e.name)} — ${formatCurrency(e.price)} x ${escapeHtml(String(e.qty))} = <span class="bold">${formatCurrency(e.rowTotal)}</span></div>`;
+  });
+  html += `<div style="margin-top:8px;font-weight:700">Totale Extra: ${formatCurrency(totaleExtra)}</div>`;
+  html += `</div>`;
+
+  // TEMPISTICHE
+  const giorni = document.getElementById('giorniLavoro').value || '0';
+  const persone = document.getElementById('personeLavoro').value || '1';
+  html += `<div class="section"><h2>TEMPISTICHE</h2><div>Giorni di lavoro: ${escapeHtml(giorni)} • Persone: ${escapeHtml(persone)}</div></div>`;
+
+  // TOTALE
+  html += `<div class="section"><h2>TOTALE</h2>`;
+  html += `<div>Imbiancatura: ${formatCurrency(base)}</div>`;
+  html += `<div>Sconto: ${scontoTipo === 'percent' ? escapeHtml(String(scontoVal)) + '%' : (scontoVal ? formatCurrency(scontoVal) : formatCurrency(0))}</div>`;
+  html += `<div style="margin-top:8px;font-weight:700">Totale (dopo sconto): ${formatCurrency(dopoSconto)}</div>`;
+  if(totaleExtra > 0) html += `<div style="margin-top:8px;font-weight:700">Totale + Lavorazioni Extra: ${formatCurrency(totaleFinale)}</div>`;
+  html += `</div>`;
+
+  html += `<em class="note">*Accurata copertura e spostamento e successivo riordino a fine lavori di piccola mobilia.</em>`;
+
+  html += `</body></html>`;
+
+  const w = window.open('about:blank','_blank');
+  if(!w){ alert('Pop-up bloccato: abilita pop-up per generare il PDF.'); return; }
+  w.document.open();
+  w.document.write(html);
+  w.document.close();
+  setTimeout(()=>{ try{ w.focus(); w.print(); } catch(e){ console.warn(e); } }, 300);
+};
+
+/* ---------- INIT ---------- */
+document.getElementById('dataPreventivo').value = new Date().toISOString().slice(0,10);
+addRoomBlock(); // start with one room
+updateTotals();
+</script>
+</body>
+</html>
