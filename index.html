@@ -78,7 +78,8 @@
   <div class="card">
     <div class="section-title">LAVORI EXTRA</div>
     <div style="display:flex;justify-content:flex-end;margin-bottom:8px">
-      <button id="addExtraBtn" type="button" class="alt">+ Aggiungi lavoro extra</button>
+      <button id="addExtraCstmBtn" type="button" class="alt">+ Aggiungi lavoro personalizzato</button>
+	  <button id="addExtraBtn" type="button" class="alt">+ Aggiungi lavoro extra</button>
     </div>
     <div class="extras-list" id="extrasContainer"></div>
     <div style="display:flex;justify-content:space-between;margin-top:8px;font-weight:700">
@@ -275,17 +276,25 @@ function addRoomBlock(pref={}){
 }
 
 /* ---------- EXTRAS: dropdown + prezzo/unità + quantità + totale riga ---------- */
-function addExtra(pref={}){
+function addExtra(cstm=false){
   const wrapper = document.createElement('div');
   wrapper.className = 'extra extra-row';
-  // build select options
-  const options = defaultExtras.map(e=>`<option value="${escapeHtml(e)}">${escapeHtml(e)}</option>`).join('');
-  wrapper.innerHTML = `
-    <div style="display:flex;gap:8px;align-items:center">
-      <select class="extra-name" style="flex:2">
+  
+  let extra_name;
+  if (cstm) {
+    extra_name = `<input class="extra-name" type="text" placeholder="Specificare lavoro" name="extra-name" style="flex:5">`;
+  } else {
+    // build select options
+    const options = defaultExtras.map(e=>`<option value="${escapeHtml(e)}">${escapeHtml(e)}</option>`).join('');
+	extra_name = `<select class="extra-name" style="flex:2">
         <option value="">— Seleziona lavoro —</option>
         ${options}
-      </select>
+      </select>`;
+  }
+  
+  wrapper.innerHTML = `
+    <div style="display:flex;gap:8px;align-items:center">
+      `+extra_name+`
       <input class="extra-price" type="text" inputmode="decimal" placeholder="Prezzo/unità (€)" style="flex:1"/>
       <input class="extra-qty" type="number" min="1" value="1" style="width:80px"/>
       <input class="extra-row-total" type="text" readonly value="€0,00" style="width:110px"/>
@@ -300,11 +309,6 @@ function addExtra(pref={}){
   const totalInput = wrapper.querySelector('.extra-row-total');
 
   removeBtn.onclick = () => { wrapper.remove(); updateTotals(); };
-
-  // prefill
-  if(pref.name) selectName.value = pref.name;
-  if(pref.price) priceInput.value = String(pref.price);
-  if(pref.qty) qtyInput.value = String(pref.qty);
 
   function updateRow(){
     const price = parseNumber(priceInput.value);
@@ -364,6 +368,7 @@ function updateTotals(){
 /* ---------- EVENTS ---------- */
 document.getElementById('addRoomBtn').onclick = () => addRoomBlock();
 document.getElementById('addExtraBtn').onclick = () => addExtra();
+document.getElementById('addExtraCstmBtn').onclick = () => addExtra(true);
 document.getElementById('imbiancaturaPrezzo').addEventListener('input', updateTotals);
 document.getElementById('scontoValore').addEventListener('input', updateTotals);
 document.getElementById('scontoTipo').addEventListener('change', updateTotals);
@@ -465,13 +470,15 @@ document.getElementById('generateBtn').onclick = () => {
   html += `</div>`;
 
   // EXTRA
-  html += `<div class="section"><h2>LAVORAZIONI EXTRA</h2>`;
-  if(extras.length===0) html += `<div class="muted">Nessuna lavorazione extra inserita.</div>`;
-  extras.forEach(e => {
-    html += `<div style="margin-bottom:6px">${escapeHtml(e.name)} — ${formatCurrency(e.price)} x ${escapeHtml(String(e.qty))} = <span class="bold">${formatCurrency(e.rowTotal)}</span></div>`;
-  });
-  html += `<div style="margin-top:8px;font-weight:700">Totale Extra: ${formatCurrency(totaleExtra)}</div>`;
-  html += `</div>`;
+  if(extras.length>0) {
+	  html += `<div class="section"><h2>LAVORAZIONI EXTRA</h2>`;
+	  if(extras.length===0) html += `<div class="muted">Nessuna lavorazione extra inserita.</div>`;
+	  extras.forEach(e => {
+		html += `<div style="margin-bottom:6px">${escapeHtml(e.name)} — ${formatCurrency(e.price)} x ${escapeHtml(String(e.qty))} = <span class="bold">${formatCurrency(e.rowTotal)}</span></div>`;
+	  });
+	  html += `<div style="margin-top:8px;font-weight:700">Totale Extra: ${formatCurrency(totaleExtra)}</div>`;
+	  html += `</div>`;
+  }
 
   // TEMPISTICHE
   const giorni = document.getElementById('giorniLavoro').value || '0';
@@ -505,4 +512,3 @@ updateTotals();
 </script>
 </body>
 </html>
-
